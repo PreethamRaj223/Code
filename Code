@@ -1,0 +1,59 @@
+public class FitPeoAutomation {
+    public static void main(String[] args) {
+        // Set path to your WebDriver executable
+        System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver"); // Update with actual path
+
+        // Initialize WebDriver (ChromeDriver example)
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--start-maximized");
+        WebDriver driver = new ChromeDriver(options);
+
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, 10);
+
+            // 1. Navigate to the FitPeo Homepage
+            driver.get("https://www.fitpeo.com");
+            WebElement revenueCalculatorLink = wait.until(
+                    ExpectedConditions.elementToBeClickable(By.linkText("Revenue Calculator"))
+            );
+            revenueCalculatorLink.click();
+
+            WebElement sliderSection = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("slider"))
+            );
+            driver.executeScript("arguments[0].scrollIntoView(true);", sliderSection);
+            WebElement slider = driver.findElement(By.id("slider"));
+            driver.executeScript("arguments[0].value = 820;", slider);
+            slider.sendKeys(Keys.RETURN);
+            WebElement textField = driver.findElement(By.id("text-field"));
+            textField.clear();
+            textField.sendKeys("560");
+            textField.sendKeys(Keys.RETURN);
+            String sliderValue = driver.executeScript("return arguments[0].value;", slider).toString();
+            if (!"560".equals(sliderValue)) {
+                throw new AssertionError("Slider value did not update correctly. Expected: 560, Found: " + sliderValue);
+            }
+
+            String[] cptCodes = {"CPT-99091", "CPT-99453", "CPT-99454", "CPT-99474"};
+            for (String code : cptCodes) {
+                WebElement checkbox = wait.until(
+                        ExpectedConditions.elementToBeClickable(By.xpath("//label[text()='" + code + "']/preceding-sibling::input"))
+                );
+                checkbox.click();
+            }
+
+            WebElement totalReimbursement = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("total-reimbursement"))
+            );
+            String totalReimbursementText = totalReimbursement.getText();
+            if (!"$110700".equals(totalReimbursementText)) {
+                throw new AssertionError("Total Recurring Reimbursement value is incorrect. Expected: $110700, Found: " + totalReimbursementText);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            driver.quit();
+        }
+    }
+}
